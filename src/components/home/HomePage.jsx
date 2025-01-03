@@ -8,13 +8,16 @@ import {
   TableHead,
   TableRow,
   Paper,
-  CircularProgress,
   Button,
   IconButton,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
+  Snackbar,
+  Alert,
+  Avatar,
+  Breadcrumbs,
 } from "@mui/material";
 import { useEffect, useState } from "react";
 import makeApiCall from "../../common/makeApiCall";
@@ -22,12 +25,17 @@ import apiEndPoints from "../../common/endpoints";
 import "./homepage.css";
 import { Edit as EditIcon, Delete as DeleteIcon } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
+import AddEmployeeForm from "../AddEmployee/AddEmployeeForm";
+import { NavigateNext as NavigateNextIcon } from "@mui/icons-material";
 
 const HomePage = () => {
   const [employeeList, setEmployeeList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [employeeToDelete, setEmployeeToDelete] = useState(null);
+  const [showAddModal, setShowAddModal] = useState(false);
   const [openModal, setOpenModal] = useState(false);
+  const [openSnackbar, setOpenSnackbar] = useState(false);
+  const [alertMessage, setAlertMessage] = useState("");
 
   const navigate = useNavigate();
 
@@ -46,7 +54,7 @@ const HomePage = () => {
   //Api call for Delete Employee
   const handleDelete = async () => {
     setEmployeeList((prev) => {
-      console.log("prev", prev);
+      // console.log("prev", prev);
       return prev.filter((item) => item._id !== employeeToDelete);
     });
     try {
@@ -54,6 +62,8 @@ const HomePage = () => {
         "DELETE",
         `${apiEndPoints.removeEmployee}/${employeeToDelete}`
       );
+      setOpenSnackbar(true);
+      setAlertMessage("Employee Deleted!");
     } catch (err) {
       console.log("Error:", err);
     } finally {
@@ -77,7 +87,9 @@ const HomePage = () => {
     }
   };
 
-  const handleAddEmployee = () => {};
+  const handleAddEmployee = () => {
+    setShowAddModal(true);
+  };
 
   useEffect(() => {
     loadEmployeeList();
@@ -105,11 +117,20 @@ const HomePage = () => {
           justifyContent: "space-between",
           alignItems: "center",
           width: "100%",
-          padding: "0 20px",
+          padding: "8px 20px",
           bgcolor: "#ffffff",
           boxShadow: "0px 4px 6px rgba(0, 0, 0, 0.1)",
         }}
       >
+        <Breadcrumbs
+          separator={<NavigateNextIcon fontSize="small" />}
+          aria-label="breadcrumb"
+          sx={{ marginBottom: 2 }}
+        >
+          <Typography color="textPrimary" component="h1" variant="h4">
+            {/* Employees List */}
+          </Typography>
+        </Breadcrumbs>
         <Typography
           variant="h3"
           component="h1"
@@ -166,8 +187,11 @@ const HomePage = () => {
                   <TableCell align="left" sx={{ fontWeight: "bold" }}>
                     Age
                   </TableCell>
-                  <TableCell align="left" sx={{ fontWeight: "bold" }}>
+                  <TableCell align="center" sx={{ fontWeight: "bold" }}>
                     Created Date(DD/MM/YYYY)
+                  </TableCell>
+                  <TableCell align="center" sx={{ fontWeight: "bold" }}>
+                    Updated Date(DD/MM/YYYY)
                   </TableCell>
                   <TableCell align="center" sx={{ fontWeight: "bold" }}>
                     Action
@@ -185,9 +209,12 @@ const HomePage = () => {
                       {serial + 1}
                     </TableCell>
                     <TableCell align="left" className="employee-cell">
-                      <img
+                      <Avatar
                         className="profileImg"
-                        src={employee.image}
+                        src={
+                          employee.image ||
+                          "https://www.pikpng.com/pngl/m/80-805068_my-profile-icon-blank-profile-picture-circle-clipart.png"
+                        }
                         alt="employee_img"
                       />
                       {employee.fullName}
@@ -196,8 +223,11 @@ const HomePage = () => {
                     <TableCell align="left">{employee.phone}</TableCell>
                     <TableCell align="left">{employee.salary}</TableCell>
                     <TableCell align="left">{employee.age}</TableCell>
-                    <TableCell align="left">
+                    <TableCell align="center">
                       {formatDate(employee.createdAt)}
+                    </TableCell>
+                    <TableCell align="center">
+                      {formatDate(employee.updatedAt)}
                     </TableCell>
                     <TableCell align="center">
                       <div className="action-buttons">
@@ -237,8 +267,36 @@ const HomePage = () => {
               </Button>
             </DialogActions>
           </Dialog>
+
+          <Dialog open={showAddModal} onClose={() => setShowAddModal(false)}>
+            <DialogTitle>Add New Employee</DialogTitle>
+            <DialogContent>
+              <AddEmployeeForm
+                onSuccess={() => {
+                  loadEmployeeList();
+                  setShowAddModal(false);
+                  setOpenSnackbar(true);
+                  setAlertMessage("New Employee Added!");
+                }}
+              />
+            </DialogContent>
+          </Dialog>
         </Box>
       )}
+      <Snackbar
+        open={openSnackbar}
+        autoHideDuration={2000} // Snackbar shows for 2 seconds
+        onClose={() => setOpenSnackbar(false)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert
+          onClose={() => setOpenSnackbar(false)}
+          severity="success"
+          sx={{ width: "100%" }}
+        >
+          {alertMessage}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

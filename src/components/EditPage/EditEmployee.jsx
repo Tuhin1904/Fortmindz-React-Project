@@ -8,14 +8,19 @@ import {
   Avatar,
   IconButton,
   Modal,
+  Snackbar,
+  Alert,
 } from "@mui/material";
 import { useEffect, useState } from "react";
 import apiEndPoints from "../../common/endpoints";
 import EditIcon from "@mui/icons-material/Edit";
+import { useDispatch, useSelector } from "react-redux";
+import EditPageHeader from "./EditPageHeader";
+import { setUserData } from "../../redux/Slices/EmployeeHeader";
 
 const EditEmployee = () => {
   const { id } = useParams();
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loader, setLoader] = useState(false);
   const [imageUrl, setImageUrl] = useState("");
@@ -27,6 +32,11 @@ const EditEmployee = () => {
     email: "",
     phone: "",
   });
+  const [openSnackbar, setOpenSnackbar] = useState(false);
+  const [alertMessage, setAlertMessage] = useState("");
+
+  const dispatch = useDispatch();
+  const empHeadVal = useSelector((state) => state.empHead);
 
   const getElementById = async () => {
     setLoader(true);
@@ -37,17 +47,20 @@ const EditEmployee = () => {
       );
       // console.log("response:",response.data)
       const emp = response.data;
+
       setEmployee({
         fullName: emp.fullName,
         image:
           emp.image ||
-          "https://plus.unsplash.com/premium_photo-1671656333460-793292581bc6?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+          "https://www.pikpng.com/pngl/m/80-805068_my-profile-icon-blank-profile-picture-circle-clipart.png",
         age: emp.age,
         email: emp.email,
         phone: emp.phone,
         salary: emp.salary,
       });
       setImageUrl(emp.image);
+
+      dispatch(setUserData({ fullName: emp.fullName, image: emp.image }));
     } catch (err) {
       console.log("Error:", err);
     } finally {
@@ -69,6 +82,7 @@ const EditEmployee = () => {
     e.preventDefault();
 
     const updatedData = {
+      salary: getemployee.salary,
       fullName: getemployee.fullName,
       email: getemployee.email,
       phone: getemployee.phone,
@@ -81,7 +95,16 @@ const EditEmployee = () => {
         `${apiEndPoints.updateEmployee}/${id}`,
         updatedData
       );
-      console.log("response:", response);
+      if (response.isSuccess) {
+        setOpenSnackbar(true);
+        setAlertMessage(response.message);
+        dispatch(
+          setUserData({
+            fullName: getemployee.fullName,
+            image: getemployee.image,
+          })
+        );
+      }
     } catch (err) {
       console.error("Error:", err);
     } finally {
@@ -89,11 +112,29 @@ const EditEmployee = () => {
     }
   };
 
-  // Handle image URL update
-
   // Save image URL and close modal
-  const handleSaveImage = () => {
-    handleCloseModal();
+  const handleSaveImage = async () => {
+    try {
+      const response = await makeApiCall(
+        "PUT",
+        `${apiEndPoints.updateEmployee}/${id}`,
+        { ...getemployee, image: imageUrl }
+      );
+      if (response.isSuccess) {
+        setOpenSnackbar(true);
+        setAlertMessage("Image Updated!");
+        dispatch(
+          setUserData({
+            fullName: getemployee.fullName,
+            image: imageUrl,
+          })
+        );
+      }
+    } catch (err) {
+      console.error("Error:", err);
+    } finally {
+      handleCloseModal();
+    }
   };
 
   useEffect(() => {
@@ -118,28 +159,7 @@ const EditEmployee = () => {
             flexDirection: "column",
           }}
         >
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              padding: 2,
-              backgroundColor: "#f5f5f5",
-              boxShadow: 1,
-            }}
-          >
-            <Typography variant="h5" fontWeight="bold">
-              Update Page
-            </Typography>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-              <Typography variant="h6">{getemployee.fullName}</Typography>
-              <Avatar
-                src={getemployee.image}
-                alt={getemployee.name}
-                sx={{ width: 50, height: 50 }}
-              />
-            </Box>
-          </Box>
+          <EditPageHeader />
 
           <div
             style={{
@@ -151,10 +171,10 @@ const EditEmployee = () => {
           >
             <div style={{ position: "relative" }}>
               {/* Profile Image */}
-              <img
-                src={getemployee.image}
+              <Avatar
+                src={empHeadVal.image}
                 alt="profile_pic"
-                style={{
+                sx={{
                   width: "150px",
                   height: "150px",
                   borderRadius: "50%",
@@ -215,6 +235,7 @@ const EditEmployee = () => {
               <TextField
                 label="Age"
                 name="age"
+                type="number"
                 value={getemployee.age}
                 onChange={handleChange}
                 fullWidth
@@ -222,6 +243,7 @@ const EditEmployee = () => {
               <TextField
                 label="Salary"
                 name="salary"
+                type="number"
                 value={getemployee.salary}
                 onChange={handleChange}
                 fullWidth
@@ -287,6 +309,20 @@ const EditEmployee = () => {
           </div>
         </Box>
       )}
+      <Snackbar
+        open={openSnackbar}
+        autoHideDuration={2000} // Snackbar shows for 2 seconds
+        onClose={() => setOpenSnackbar(false)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert
+          onClose={() => setOpenSnackbar(false)}
+          severity="success"
+          sx={{ width: "100%" }}
+        >
+          {alertMessage}
+        </Alert>
+      </Snackbar>
     </>
   );
 };
