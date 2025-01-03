@@ -1,11 +1,12 @@
 import axios from 'axios';
 
 const makeApiCall = async (method, endpoint, data = null, params = null) => {
+  const baseURL = import.meta.env.VITE_API_HOST;
   try {
     const config = {
       method, 
-      url: endpoint,
-      data, 
+      url: `${baseURL}${endpoint}`,
+      data: method === 'POST' || method === 'PUT' ? data : undefined,
       params, 
       headers: {
         'Content-Type': 'application/json', 
