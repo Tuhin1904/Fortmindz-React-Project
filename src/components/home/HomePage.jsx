@@ -4,6 +4,7 @@ import makeApiCall from '../../common/makeApiCall';
 import apiEndPoints from '../../common/endpoints';
 import './homepage.css'
 import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
+import { useNavigate } from 'react-router-dom';
 
 const HomePage = () => {
     const [employeeList, setEmployeeList] = useState([]);
@@ -11,6 +12,7 @@ const HomePage = () => {
     const [employeeToDelete, setEmployeeToDelete] = useState(null);
     const [openModal, setOpenModal] = useState(false); 
 
+    const navigate = useNavigate();
 
     //Show Delete Modal
     const handleOpenModal = (employeeId) => {
@@ -56,6 +58,11 @@ const HomePage = () => {
         loadEmployeeList()
     },[])
 
+    const formatDate = (date) => { 
+        const newDate = date.slice(0,10)
+        return newDate.split('-').reverse().join('-');
+    }
+
 
   return (
     <Box
@@ -68,11 +75,14 @@ const HomePage = () => {
         minHeight: '100vh',
       }}
     >
-      <Typography variant="h3" component="h1" gutterBottom sx={{ fontWeight: 'bold', color: '#3f51b5' }}>
-        Welcome to the FORTMINDZ!!
+      <Typography variant="h3" component="h1" gutterBottom sx={{ fontWeight: 'bold', color: '#ffaa17' }}>
+        Welcome to the FORTMINDZ!
       </Typography>
       {loading ? (
-        <CircularProgress sx={{ marginTop: '20px' }} />
+        <div className="loader">
+            <div className="loader-inner">
+        </div>
+    </div>
       ) : (
         // Employee Table
         <Box sx={{ width: '80%', marginTop: '20px' }}>
@@ -98,6 +108,9 @@ const HomePage = () => {
                   <TableCell align="left" sx={{ fontWeight: 'bold' }}>
                     Age
                   </TableCell>
+                  <TableCell align="left" sx={{ fontWeight: 'bold' }}>
+                    Created Date(DD/MM/YYYY)
+                  </TableCell>
                   <TableCell align="center" sx={{ fontWeight: 'bold' }}>
                     Action
                   </TableCell>
@@ -116,9 +129,12 @@ const HomePage = () => {
                     <TableCell align="left">{employee.phone}</TableCell>
                     <TableCell align="left">{employee.salary}</TableCell>
                     <TableCell align="left">{employee.age}</TableCell>
+                    <TableCell align="left">
+                        {formatDate(employee.createdAt)}
+                    </TableCell>
                     <TableCell align="center">
                         <div className="action-buttons">
-                                <IconButton color="primary" aria-label="edit">
+                                <IconButton color="primary" aria-label="edit" onClick={() => navigate(`/edit/${employee._id}`)}>
                                    <EditIcon />
                                 </IconButton>
                         
